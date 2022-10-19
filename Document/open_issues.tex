@@ -1,5 +1,15 @@
 \section{Open Issues}\label{sec:open_issues}
 
+
+\begin{issue}[Thing type]\label{issue:thing_type}
+The grammar contains a type \texttt{thing}, but it is not clear in which
+  contexts it can be used. A declaration of the form \texttt{foothing sub
+    thing;} leads to an error (\texttt{[CNX07] TypeDB Connection: Transaction
+    was closed due to: INTERNAL: [TYW35] Invalid Type Write: The type
+    'foothing' cannot be defined, as the provided supertype 'thing' is not a
+    valid thing type..}).\crash{Transaction closed}
+\end{issue}
+
 \begin{issue}[Declaration of attributes]\label{issue:decl_attribute}
 For a declaration of an attribute, it is apparently necessary to write
 something like:

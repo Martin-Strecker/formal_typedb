@@ -14,16 +14,13 @@ datatype value_type
   = LongVT | DoubleVT | StringVT | BooleanVT | DatetimeVT 
 
 text \<open> See grammar l. 189  \<close>
+text  \<open> Thing type not used, see \issueref{issue:thing_type} \<close>
 datatype native_type 
   = Attribute
   | Entity
   | Relation
   | Role
-  text  \<open> TODO: Thing type excluded.
-   It occurs in the grammar but not clear how to use it. \<close>
-  (*
   | Thing
-*)
 
 datatype tp 
   = NativeTp native_type
@@ -58,6 +55,10 @@ text \<open>Declared names (for whatever kind) \<close>
 definition declared_names :: "ctxt => name set" where
 "declared_names c = {n. \<exists> r t. Ctxt_def (NamedTp n) r t \<in> set c }"
 
+
+text \<open> Check if, in a context, a name is (directly or transitively) 
+of a kind / native type, such as Entity, Relation \<close>
+
 inductive decl_of_kind :: "ctxt => name => native_type => bool" where
 decl_of_kind_base: 
    "decl_of_kind ((Ctxt_def (NamedTp n) Sub (NativeTp k)) # c) n k"
@@ -71,18 +72,18 @@ decl_of_kind_step_other:
 \<Longrightarrow> decl_of_kind c n2 k
 \<Longrightarrow> decl_of_kind ((Ctxt_def (NamedTp n1) Sub (NamedTp n2)) # c) n k"
 
+text \<open> Well-formedness of a context, defined inductively in the style of Prolog rules. \<close>
+
 inductive wf_ctxt :: "ctxt => bool" where
 \<comment> \<open> Empty context is wellformed \<close>
 wf_empty: "wf_ctxt []"
 |
-
 \<comment> \<open> Of the form:  \texttt{serial\_num sub attribute}.
-   This declaration seems redundant, see \issueref{issue:decl_attribute} \<close>
+   This declaration seems redundant, see \issueref{issue:decl_attribute}.
+   Also not clear: is there a transitive subtyping of attributes?  \<close>
 wf_sub_attribute: "wf_ctxt c 
 \<Longrightarrow> nt \<notin> declared_names c
 \<Longrightarrow> wf_ctxt ((Ctxt_def (NamedTp nt) Sub (NativeTp Attribute)) # c )"
-(* TODO: open question: is there a transitive subtyping of attributes? *)
-
 |
 \<comment> \<open>  Of the form:  \texttt{a\_entity sub entity} \<close>
 wf_sub_entity: "wf_ctxt c 
@@ -100,7 +101,6 @@ wf_sub_relation: "wf_ctxt c
 \<Longrightarrow> nt \<notin> declared_names c
 \<Longrightarrow> wf_ctxt ((Ctxt_def (NamedTp nt) Sub (NativeTp Relation)) # c )"
 |
- 
 \<comment> \<open> Of the form:  \texttt{r\_sub\_relation sub r\_relation}  \<close>
 wf_sub_relation_trans: "wf_ctxt c 
 \<Longrightarrow> nt1 \<notin> declared_names c
@@ -115,14 +115,12 @@ wf_owns_entity: "wf_ctxt c
 \<Longrightarrow> decl_of_kind c et Entity
 \<Longrightarrow> decl_of_kind c at Attribute
 \<Longrightarrow> wf_ctxt ((Ctxt_def (NamedTp et) Owns (NamedTp at)) # c )"
-
 |
 \<comment> \<open>Of the form:  \texttt{r\_relation owns serial\_num} \<close>
 wf_owns_relation: "wf_ctxt c 
 \<Longrightarrow> decl_of_kind c rt Entity
 \<Longrightarrow> decl_of_kind c at Attribute
 \<Longrightarrow> wf_ctxt ((Ctxt_def (NamedTp rt) Owns (NamedTp at)) # c )"
-
 |
 (* Surprisingly, the role type is not constrained, 
    i.e. can be a previously declared entity or relation type *)
@@ -146,7 +144,6 @@ wf_plays: "wf_ctxt c
 \<Longrightarrow> decl_of_kind c relt Relation
 \<Longrightarrow> NamedTp rolet \<in> role_decls c
 \<Longrightarrow> wf_ctxt ((Ctxt_plays_def (NamedTp et) (NamedTp relt) (NamedTp rolet)) # c)"
-
 |
 \<comment> \<open>Of the form:  \texttt{serial\_num value long}, also see \issueref{issue:decl_attribute} \<close>
 wf_value: "wf_ctxt c 
