@@ -1,0 +1,53 @@
+\section{Structure of the Document}
+
+In this document, the authors try to gain a better understanding of the TypeDB
+system, in particular the relation of the type system and its query and update
+language.
+
+This document is currently in a \emph{very preliminary form} but is likely to
+evolve in the following months. Its \textbf{structure} is:
+
+\begin{itemize}
+\item As the documeent evolves, a rigorous, but still informal presentation is
+  planned in the current chapter.
+\item To get a precise understanding of the notions involved, we have started
+  a formalization in the Isabelle proof assistant
+  Isabelle\footnote{\url{https://isabelle.in.tum.de/}}. The formalization of
+  TypeDB can be found in Chapter~\ref{ch:isabelle_formalization}. 
+\item Issues that come up during formalization will first be described in more
+  detail in Section~\ref{sec:open_issues} and, upon resolution, migrate to
+  Section~\ref{sec:resolved_issues} with a justification of the adopted
+  solution.
+\end{itemize}
+
+Sources of the document and the formalizations are available on
+Github\footnote{\url{https://github.com/Martin-Strecker/formal_typedb}}.
+
+
+Our main \textbf{sources of information} are the following:
+
+\begin{itemize}
+\item the TypeDB documentation available on the
+  web\footnote{\url{https://docs.vaticle.com/}},
+  henceforth referenced as [DOC];
+\item a video about knowledge
+  graphs\footnote{\url{https://vaticle.com/use-cases/knowledge-graphs}},
+  henceforth referenced as [KGV], or for a particular instant (minute, second)
+  within this video as [KGV:min:sec] or simply [KGV:min]
+\item the
+  grammar\footnote{\url{https://github.com/vaticle/typeql/blob/master/grammar/TypeQL.g4}}
+  referred to as [GR].
+\end{itemize}
+
+\paragraph{Acknowledgements:} The work has grown out of an internship by
+Cécile Prieur, which has been co-supervised by Ralph Matthes. We gratefully
+acknowledge their ideas and contributions. The internship's
+Github repository is still available\footnote{\url{https://github.com/Martin-Strecker/stage_typedb}}. 
+
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "main"
+%%% coding: utf-8
+%%% End:

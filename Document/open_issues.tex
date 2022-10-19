@@ -1,0 +1,35 @@
+\section{Open Issues}\label{sec:open_issues}
+
+\begin{issue}[Declaration of attributes]\label{issue:decl_attribute}
+For a declaration of an attribute, it is apparently necessary to write
+something like:
+\begin{verbatim}
+serial_num sub attribute,
+    value long;
+\end{verbatim}
+The declaration \texttt{sub attribute} looks redundant as only attributes can
+have a value declaration. So why not simply write the following for an
+attribute declaraion?
+\begin{verbatim}
+serial_num value long;
+\end{verbatim}
+
+Also, it is not clear under which conditions an attribute can be subtyped. The
+  following is illegal:
+  \begin{verbatim}
+serial_num sub attribute,
+    value long;
+serial_subnum sub serial_num;
+  \end{verbatim}
+  
+  and leads to the error message \texttt{[TYW16] Invalid Type Write: The
+    attribute type 'serial\_num' cannot be subtyped as it is not abstract}.
+  Even leads to a bad crash of the TypeDB server (no more commit possible,
+  server has to be restarted). \crash{Crash requiring server restart}
+\end{issue}
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "main"
+%%% End:
