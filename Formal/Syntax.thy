@@ -1,27 +1,27 @@
+
+section \<open> Syntax \label{sec:syntax} \<close>
 theory Syntax imports Main
 begin
 
+subsection \<open> Syntactic elements \label{sec:syntactic_elements} \<close>
 
-lemma simplImpl: "A \<longrightarrow> A"
-apply (rule impI)
-apply assumption
-  done
-
+text \<open> Basic concepts \<close>
 
 type_synonym name = string
 
-(* See grammar l. 192 *)
+text \<open>  See grammar l. 192 \<close>
 datatype value_type 
   = LongVT | DoubleVT | StringVT | BooleanVT | DatetimeVT 
 
-(* See grammar l. 189 *)
+text \<open> See grammar l. 189  \<close>
 datatype native_type 
   = Attribute
   | Entity
   | Relation
   | Role
-  (* TODO: Thing type excluded.
-     It occurs in the grammar but not clear how to use it.
+  text  \<open> TODO: Thing type excluded.
+   It occurs in the grammar but not clear how to use it. \<close>
+  (*
   | Thing
 *)
 
@@ -30,120 +30,127 @@ datatype tp
   | ValueTp value_type
   | NamedTp name
 
-(* See grammar l. 114 ff 
-   TODO: incomplete; missing: Abstract, Regex, Subx, Then, Type, When
-*)
-datatype tp_rel 
-  = Owns | Plays | Relates | Sub
+text \<open> See grammar l. 114 ff 
+   TODO: incomplete; missing: Abstract, Regex, Subx, Then, Type, When \<close>
 
-(* The context is meant to be constructed in a stack-wise fashion, 
-  with decreasing recency from right to left.
- *)
+datatype tp_rel 
+  = Owns | Plays | Relates | Sub | Value
+
+subsection \<open> Typing context \label{sec:typing_context} \<close>
+
+text \<open> The context is meant to be constructed in a stack-wise fashion, 
+  with decreasing recency from right to left. \<close>
+
 datatype ctxt_def 
   = Ctxt_def tp tp_rel tp
   | Ctxt_plays_def tp tp tp
 
 type_synonym ctxt = "ctxt_def list"
 
-
 (* or should this only be a name set  *)
 
 
-(* Declaration of attributes *)
-definition attribute_decls :: "ctxt => tp set" where
-"attribute_decls c = {}"
-(* Declaration of entities *)
-definition entity_decls :: "ctxt => tp set" where
-"entity_decls c = {}"
-(* Declaration of relations *)
-definition relation_decls :: "ctxt => tp set" where
-"relation_decls c = {}"
 (* Declaration of roles *)
 definition role_decls :: "ctxt => tp set" where
 "role_decls c = {}"
 
-(* Declared names (for whatever kind) *)
+text \<open>Declared names (for whatever kind) \<close>
 definition declared_names :: "ctxt => name set" where
-"declared_names c = {}"
+"declared_names c = {n. \<exists> r t. Ctxt_def (NamedTp n) r t \<in> set c }"
+
+inductive decl_of_kind :: "ctxt => name => native_type => bool" where
+decl_of_kind_base: 
+   "decl_of_kind ((Ctxt_def (NamedTp n) Sub (NativeTp k)) # c) n k"
+|
+decl_of_kind_step_same: 
+   "decl_of_kind c n2 k
+\<Longrightarrow> decl_of_kind ((Ctxt_def (NamedTp n) Sub (NamedTp n2)) # c) n k"
+|
+decl_of_kind_step_other: 
+   "n1 \<noteq> n
+\<Longrightarrow> decl_of_kind c n2 k
+\<Longrightarrow> decl_of_kind ((Ctxt_def (NamedTp n1) Sub (NamedTp n2)) # c) n k"
 
 inductive wf_ctxt :: "ctxt => bool" where
+\<comment> \<open> Empty context is wellformed \<close>
 wf_empty: "wf_ctxt []"
 |
-(* Of the form:  serial_num sub attribute *)
+
+\<comment> \<open> Of the form:  \texttt{serial\_num sub attribute}.
+   This declaration seems redundant, see \issueref{issue:decl_attribute} \<close>
 wf_sub_attribute: "wf_ctxt c 
 \<Longrightarrow> nt \<notin> declared_names c
 \<Longrightarrow> wf_ctxt ((Ctxt_def (NamedTp nt) Sub (NativeTp Attribute)) # c )"
 (* TODO: open question: is there a transitive subtyping of attributes? *)
+
 |
-(* Of the form:  a_entity sub entity *)
+\<comment> \<open>  Of the form:  \texttt{a\_entity sub entity} \<close>
 wf_sub_entity: "wf_ctxt c 
 \<Longrightarrow> nt \<notin> declared_names c
 \<Longrightarrow> wf_ctxt ((Ctxt_def (NamedTp nt) Sub (NativeTp Entity)) # c )"
 |
-(* Of the form:  a_sub_entity sub a_entity *)
+\<comment> \<open> Of the form:  \texttt{a\_sub\_entity sub a\_entity} \<close>
 wf_sub_entity_trans: "wf_ctxt c 
 \<Longrightarrow> nt1 \<notin> declared_names c
-\<Longrightarrow> NamedTp nt2 \<in> entity_decls c
+\<Longrightarrow> decl_of_kind c nt2 Entity
 \<Longrightarrow> wf_ctxt ((Ctxt_def (NamedTp nt1) Sub (NamedTp nt2)) # c )"
 |
-(* Of the form:  r_relation sub relation *)
+\<comment> \<open> Of the form:  \texttt{r\_relation sub relation}  \<close>
 wf_sub_relation: "wf_ctxt c 
 \<Longrightarrow> nt \<notin> declared_names c
 \<Longrightarrow> wf_ctxt ((Ctxt_def (NamedTp nt) Sub (NativeTp Relation)) # c )"
 |
-(* Of the form:  r_sub_relation sub r_relation *)
+ 
+\<comment> \<open> Of the form:  \texttt{r\_sub\_relation sub r\_relation}  \<close>
 wf_sub_relation_trans: "wf_ctxt c 
 \<Longrightarrow> nt1 \<notin> declared_names c
-\<Longrightarrow> NamedTp nt2 \<in> relation_decls c
+\<Longrightarrow> decl_of_kind c nt2 Relation
 \<Longrightarrow> wf_ctxt ((Ctxt_def (NamedTp nt1) Sub (NamedTp nt2)) # c )"
 
-(* no subtyping roles *)
+\<comment> \<open> no subtyping roles \<close>
 
 |
-(* Of the form:  a_entity owns serial_num *)
+\<comment> \<open> Of the form:  \texttt{a\_entity owns serial\_num}  \<close>
 wf_owns_entity: "wf_ctxt c 
-\<Longrightarrow> NamedTp et \<in> entity_decls c
-\<Longrightarrow> NamedTp at \<in> attribute_decls c
+\<Longrightarrow> decl_of_kind c et Entity
+\<Longrightarrow> decl_of_kind c at Attribute
 \<Longrightarrow> wf_ctxt ((Ctxt_def (NamedTp et) Owns (NamedTp at)) # c )"
 
 |
-(* Of the form:  r_relation owns serial_num *)
+\<comment> \<open>Of the form:  \texttt{r\_relation owns serial\_num} \<close>
 wf_owns_relation: "wf_ctxt c 
-\<Longrightarrow> NamedTp rt \<in> entity_decls c
-\<Longrightarrow> NamedTp at \<in> attribute_decls c
+\<Longrightarrow> decl_of_kind c rt Entity
+\<Longrightarrow> decl_of_kind c at Attribute
 \<Longrightarrow> wf_ctxt ((Ctxt_def (NamedTp rt) Owns (NamedTp at)) # c )"
-
 
 |
 (* Surprisingly, the role type is not constrained, 
    i.e. can be a previously declared entity or relation type *)
-(* Of the form:  r_relation relates r_role *)
+\<comment> \<open>Of the form:  \texttt{r\_relation relates r\_role} \<close>
 wf_relates: "wf_ctxt c 
-\<Longrightarrow> NamedTp relt \<in> relation_decls c
+\<Longrightarrow> decl_of_kind c relt Relation
 \<Longrightarrow> wf_ctxt ((Ctxt_def (NamedTp relt) Relates (NamedTp rolet)) # c )"
-
 |
-(* Of the form:  a_entity plays r_relation:r_role *)
+\<comment> \<open> Of the form:  \texttt{a\_entity plays r\_relation:r\_role} \<close>
 (* TODO: the Plays relation is the only ternary one, which complicates the type structure.
   Besides, a role name has to be globally unique; differently said, the same role name 
   cannot be attached to two different relations, such as in 
   r_relation relates b_role; s_relation  relates b_role;
   Therefore, writing b_entity plays r_relation:b_role; 
   is redundant because b_role already uniquely identifies r_relation.
-  It would be enough to write b_entity plays b_role;
- *)
-(* Surprisingly:
-   - et is not resticted to be: NamedTp et \<in> entity_decls c
-    *)
+  It would be enough to write b_entity plays b_role; *)
+ (* Surprisingly:
+   - et is not resticted to be and entity declaration in c
+*)
 wf_plays: "wf_ctxt c 
-\<Longrightarrow> NamedTp relt \<in> relation_decls c
+\<Longrightarrow> decl_of_kind c relt Relation
 \<Longrightarrow> NamedTp rolet \<in> role_decls c
-\<Longrightarrow> wf_ctxt ((Ctxt_plays_def (NamedTp et) (NamedTp relt) (NamedTp rolet)) # c )"
+\<Longrightarrow> wf_ctxt ((Ctxt_plays_def (NamedTp et) (NamedTp relt) (NamedTp rolet)) # c)"
 
 |
-(* Of the form:  serial_num value long *)
+\<comment> \<open>Of the form:  \texttt{serial\_num value long}, also see \issueref{issue:decl_attribute} \<close>
 wf_value: "wf_ctxt c 
-\<Longrightarrow> NamedTp at \<in> attribute_decls c
-\<Longrightarrow> wf_ctxt ((Ctxt_def (NamedTp at) Value (NativeTp bt)) # c )"
+\<Longrightarrow> decl_of_kind c at Attribute
+\<Longrightarrow> wf_ctxt ((Ctxt_def (NamedTp at) Value (ValueTp vt)) # c )"
 
 end
